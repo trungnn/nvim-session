@@ -7,27 +7,26 @@ function! s:find_git_ref()
 endfunction
 
 function! MakeSession(overwrite)
-  let b:sessiondir = $HOME . "/.config/nvim/sessions" . s:find_git_root() . "/" . s:find_git_ref()
-  if (filewritable(b:sessiondir) != 2)
-    exe 'silent !mkdir -p ' b:sessiondir
+  if (filewritable(g:sessiondir) != 2)
+    exe 'silent !mkdir -p ' g:sessiondir
     redraw!
   endif
-  let b:filename = b:sessiondir . '/session.vim'
   if a:overwrite == 0 && !empty(glob(b:filename))
     return
   endif
-  exe "mksession! " . b:filename
+  exe "mksession! " . g:sessionfile
 endfunction
 
 function! LoadSession()
-  let b:sessiondir = $HOME . "/.config/nvim/sessions" . s:find_git_root() . "/" . s:find_git_ref()
-  let b:sessionfile = b:sessiondir . "/session.vim"
-  if (filereadable(b:sessionfile))
-    exe 'source ' b:sessionfile
+  if (filereadable(g:sessionfile))
+    exe 'source ' g:sessionfile
   else
     echo "No session loaded."
   endif
 endfunction
+
+let g:sessiondir = $HOME . "/.config/nvim/sessions" . s:find_git_root() . "/" . s:find_git_ref()
+let g:sessionfile = g:sessiondir . "/session.vim"
 
 " Adding automations for when entering or leaving Vim
 if(argc() == 0)
