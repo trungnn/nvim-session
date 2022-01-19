@@ -21,3 +21,18 @@ Example:
 > fg
 # bring nvim to foreground, then quits => [store session for branch "foo", as this instance was started with branch "foo"]
 ```
+
+## Options
+
+```
+# Shada management is turned on by default, to turn it off
+let g:nvim_session_manage_shada = 0
+
+# Sessions are automatically saved after each buffer write, to turn it off
+let g:nvim_session_autosave = 0
+
+# Git root and ref are used by default to tell different sessions apart, to turn them off
+# If g:nvim_session_use_git_root is turned off then g:nvim_session_use_git_ref is ignored
+let g:nvim_session_use_git_root = 0
+let g:nvim_session_git_ref = 0
+```

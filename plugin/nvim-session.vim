@@ -9,72 +9,96 @@ function! s:find_git_ref()
   return system('git symbolic-ref --short HEAD 2> /dev/null')[:-2]
 endfunction
 
-function! SaveShada(overwrite)
-  if (g:shada_management == 1)
-    if a:overwrite == 0 && !empty(glob(b:filename))
-      return
-    endif
-
-    exe "wshada! " . g:shadafile
+function! SaveShada()
+  if (g:nvim_session_manage_shada == 1)
+    exe "wshada! " . g:nvim_session_shada_file
   endif
 endfunction
 
 function! LoadShada()
-  if (g:shada_management == 1)
-    if (!filereadable(g:shadafile))
+  if (g:nvim_session_manage_shada == 1)
+    if (!filereadable(g:nvim_session_shada_file))
       return
     endif
 
-    exe "rshada! " . g:shadafile
+    exe "rshada! " . g:nvim_session_shada_file
   endif
 endfunction
 
-function! SaveSession(overwrite)
-  if a:overwrite == 0 && !empty(glob(b:filename))
-    return
-  endif
-
-  exe "mksession! " . g:sessionfile
-  call SaveShada(a:overwrite)
+function! SaveSession()
+  exe "mksession! " . g:nvim_session_file
+  call SaveShada()
+  echo 'Current session saved to ' . g:nvim_session_file
 endfunction
 
 function! LoadSession()
-  if (!filereadable(g:sessionfile))
+  if (!filereadable(g:nvim_session_file))
     echo "No session loaded."
     return
   endif
 
-  exe 'source ' g:sessionfile
+  exe 'source ' g:nvim_session_file
   call LoadShada()
 endfunction
 
 function! CreateSessionDir()
-  if (filewritable(g:sessiondir) != 2)
-    exe 'silent !mkdir -p ' g:sessiondir
+  if (filewritable(g:nvim_session_dir) != 2)
+    exe 'silent !mkdir -p ' g:nvim_session_dir
     redraw!
   endif
 endfunction
 
-let g:sessiondir = $HOME . "/.config/nvim/sessions" . s:find_git_root() . "/" . s:find_git_ref()
-let g:sessionfile = g:sessiondir . "/session.vim"
+function! s:build_session_dir(path)
+  return $HOME . "/.config/nvim/sessions" . a:path
+endfunction
 
-" Shada management options
-let g:shada_management = get(g:, 'shada_management', 1)
-if (g:shada_management == 1)
-  let g:shadafile = g:sessiondir . "/saved.shada"
-endif
+function! s:calculate_session_dir()
+  if (g:nvim_session_use_git_root == 1)
+    let g:nvim_session_git_root = s:find_git_root()
+    if (g:nvim_session_git_root != '')
+      if (g:nvim_session_use_git_ref == 1)
+        let g:nvim_session_git_ref = s:find_git_ref()
+        if (g:nvim_session_git_ref != '')
+          return s:build_session_dir(g:nvim_session_git_root . "/" . g:nvim_session_git_ref)
+        endif
+      endif
 
-" Adding automations for when entering or leaving Vim
-call CreateSessionDir()
-if(argc() == 0)
+      return s:build_session_dir(g:nvim_session_git_root)
+    endif
+  endif
+
+  return s:build_session_dir(getcwd())
+endfunction
+
+if (argc() == 0)
+  " Shada management options
+  let g:nvim_session_manage_shada = get(g:, 'nvim_session_manage_shada', 1)
+
+  " Autosave options
+  let g:nvim_session_autosave = get(g:, 'nvim_session_autosave', 1)
+
+  " Git integration options
+  let g:nvim_session_use_git_root = get(g:, 'nvim_session_use_git_root', 1)
+  let g:nvim_session_use_git_ref = get(g:, 'nvim_session_use_git_ref', 1)
+
+  let g:nvim_session_dir = s:calculate_session_dir()
+  let g:nvim_session_file = g:nvim_session_dir . "/session.vim"
+  if (g:nvim_session_manage_shada == 1)
+    let g:nvim_session_shada_file = g:nvim_session_dir . "/saved.shada"
+  endif
+
+  call CreateSessionDir()
+  " Adding some automations
   au VimEnter * nested :call LoadSession()
-  au VimLeave * :call SaveSession(1)
-else
-  au VimLeave * :call SaveSession(0)
-endif
+  au VimLeave * :call SaveSession()
 
-" Adding some commands
-command -nargs=0 SaveSession :call SaveSession(1)
+  if (g:nvim_session_autosave == 1)
+    au BufWritePost * :call SaveSession()
+  endif
+
+  " Adding some manual commands
+  command -nargs=0 SaveSession :call SaveSession()
+endif
 
 " Flag to make sure we're not loading the plugin twice
 let g:loaded_nvim_session = 1
