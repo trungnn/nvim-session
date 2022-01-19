@@ -1,0 +1,6 @@
+# top-most EditorConfig file
+root = true
+
+[*/**.vim]
+indent_style = space
+indent_size = 2
