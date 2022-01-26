@@ -9,25 +9,8 @@ function! s:find_git_ref()
   return system('git symbolic-ref --short HEAD 2> /dev/null')[:-2]
 endfunction
 
-function! SaveShada()
-  if (g:nvim_session_manage_shada == 1)
-    exe "wshada! " . g:nvim_session_shada_file
-  endif
-endfunction
-
-function! LoadShada()
-  if (g:nvim_session_manage_shada == 1)
-    if (!filereadable(g:nvim_session_shada_file))
-      return
-    endif
-
-    exe "rshada! " . g:nvim_session_shada_file
-  endif
-endfunction
-
 function! SaveSession()
   exe "mksession! " . g:nvim_session_file
-  call SaveShada()
   echo 'Current session saved to ' . g:nvim_session_file
 endfunction
 
@@ -38,7 +21,6 @@ function! LoadSession()
   endif
 
   exe 'source ' g:nvim_session_file
-  call LoadShada()
 endfunction
 
 function! CreateSessionDir()
@@ -84,7 +66,7 @@ if (argc() == 0)
   let g:nvim_session_dir = s:calculate_session_dir()
   let g:nvim_session_file = g:nvim_session_dir . "/session.vim"
   if (g:nvim_session_manage_shada == 1)
-    let g:nvim_session_shada_file = g:nvim_session_dir . "/saved.shada"
+    exe 'set shadafile=' . g:nvim_session_dir . "/saved.shada"
   endif
 
   call CreateSessionDir()
